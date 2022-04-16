@@ -5,7 +5,7 @@
   "description": "Frontend for the フリエンド Project",
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build --modern --inline-vue --mode production && rm -rf ../furiendo-project/app && cp -R ./dist ../furiendo-project/app/",
+    "build": "vue-cli-service build --modern --inline-vue --mode production && rm -rf ../furiendo-project/public && cp -R ./dist ../furiendo-project/public/",
     "lint": "vue-cli-service lint"
   },
   "repository": {
