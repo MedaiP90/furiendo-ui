@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex align-center justify-center" main-content>
+  <div class="d-flex flex-column align-center py-6" main-content>
     <v-card width="min(95ch, 95vw)">
       <v-card-text>
         <v-btn v-on:click="goToMenu(true)" color="primary" block>

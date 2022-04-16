@@ -14,7 +14,7 @@
         <div v-if="sent">
           {{
             creator
-              ? 'Lista inviata, tu sei il creatore dell\'ordine: premi "Invia le tue scelte" quando tutti sono pronti'
+              ? 'Lista inviata, tu sei il creatore dell\'ordine: premi "Genera la lista di piatti" quando tutti sono pronti'
               : "Qui è tutto pronto, いただきます!"
           }}
         </div>
