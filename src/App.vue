@@ -22,6 +22,16 @@
     <v-main>
       <router-view />
     </v-main>
+
+    <v-snackbar v-model="message" v-bind:color="mType" top>
+      {{ mText }}
+
+      <template v-slot:action="{ attrs }">
+        <v-btn v-bind="attrs" v-on:click="message = false" icon>
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-app>
 </template>
 
@@ -42,19 +52,29 @@ export default {
 
   data: () => ({
     isHome: true,
+    message: false,
+    mType: undefined,
+    mText: undefined,
   }),
 
   beforeMount() {
     this.$bus.$on("home", this.toggleHomeBtn);
+    this.$bus.$on("message", this.createMessage);
   },
 
   beforeDestroy() {
     this.$bus.$off("home", this.toggleHomeBtn);
+    this.$bus.$off("message", this.createMessage);
   },
 
   methods: {
     toggleHomeBtn(isHome) {
       this.isHome = isHome;
+    },
+    createMessage(messageDetails) {
+      this.mType = messageDetails.type;
+      this.mText = messageDetails.text;
+      this.message = true;
     },
     goHome() {
       this.$router.replace({ name: "home" });
