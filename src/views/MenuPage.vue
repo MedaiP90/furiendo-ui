@@ -43,9 +43,43 @@
       </v-card-text>
     </v-card>
 
+    <v-card
+      v-if="sent && dishes.length > 0"
+      class="mb-6"
+      width="min(95ch, 95vw)"
+    >
+      <v-expansion-panels v-model="panel" flat>
+        <v-expansion-panel>
+          <v-expansion-panel-header>Le tue scelte</v-expansion-panel-header>
+          <v-expansion-panel-content>
+            <v-list dense>
+              <v-list-item
+                v-for="dish in dishes"
+                v-bind:key="'dish-item-' + dish"
+                dense
+              >
+                <v-list-item-icon>
+                  <v-simple-checkbox v-model="dish.checked" color="primary" />
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>{{ dish.name }}</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </v-expansion-panel-content>
+        </v-expansion-panel>
+      </v-expansion-panels>
+    </v-card>
+
     <v-card v-if="creator || generated" width="min(95ch, 95vw)">
       <v-card-text>
-        <v-btn v-if="!generated" v-on:click="generate" color="primary" block>
+        <v-btn
+          v-if="!generated"
+          v-bind:disabled="!sent"
+          v-on:click="generate"
+          color="primary"
+          block
+        >
           Genera la lista di piatti
         </v-btn>
         <div v-else>
@@ -80,6 +114,14 @@
         </div>
       </v-card-text>
     </v-card>
+
+    <!-- Confirm dialogs -->
+
+    <ConfirmDialog
+      v-bind:open="openConfirm"
+      v-on:btn-negative="openConfirm = false"
+      ref="confirmDialog"
+    />
   </div>
 </template>
 
@@ -92,16 +134,22 @@ div[main-content] {
 
 <script>
 import Requests from "../utils/requests";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 export default {
   name: "MenuPage",
+
+  components: { ConfirmDialog },
 
   data: () => ({
     menuId: undefined,
     sent: false,
     generated: false,
     order: undefined,
+    dishes: [],
     menu: [],
+    openConfirm: false,
+    panel: undefined,
   }),
 
   computed: {
@@ -137,44 +185,71 @@ export default {
     },
     addToMenu() {
       const orders = this.order.split(",").map((item) => item.trim());
+      const dialog = this.$refs.confirmDialog;
 
-      Requests.addToMenu(
-        this.menuId,
-        orders,
-        () => {
-          this.sent = true;
-        },
-        (err) => {
-          if (process.env.NODE_ENV === "development") console.error(err);
+      this.dishes = orders.map((o) => ({ name: o, checked: false }));
 
-          this.$bus.$emit("message", {
-            type: "error",
-            text:
-              err?.response?.status === 404
-                ? "L'ordine è già stato chiuso"
-                : `Impossibile inviare la lista: ${err}`,
-          });
-        }
-      );
+      dialog.title = "Invio scelte";
+      dialog.message =
+        "<strong>Attenzione</strong>: inviando la tua lista delle scelte non potrai più aggiungere pietanze al tuo ordine." +
+        "<br />Vuoi continuare?";
+      dialog.btnPositive = () => {
+        Requests.addToMenu(
+          this.menuId,
+          orders,
+          () => {
+            this.sent = true;
+
+            if (!this.creator) this.panel = 0;
+          },
+          (err) => {
+            if (process.env.NODE_ENV === "development") console.error(err);
+
+            this.$bus.$emit("message", {
+              type: "error",
+              text:
+                err?.response?.status === 404
+                  ? "L'ordine è già stato chiuso"
+                  : `Impossibile inviare la lista: ${err}`,
+            });
+          }
+        );
+
+        this.openConfirm = false;
+      };
+
+      this.openConfirm = true;
     },
     generate() {
-      Requests.getMenu(
-        this.menuId,
-        (res) => {
-          this.menu = res.data.menu;
-          this.generated = true;
+      const dialog = this.$refs.confirmDialog;
 
-          this.$store.commit("setCreator", false);
-        },
-        (err) => {
-          if (process.env.NODE_ENV === "development") console.error(err);
+      dialog.title = "Genera lista";
+      dialog.message =
+        "<strong>Attenzione</strong>: generando la lista di piatti i tuoi amici non potranno più inviare le loro scelte." +
+        "<br />Vuoi continuare?";
+      dialog.btnPositive = () => {
+        Requests.getMenu(
+          this.menuId,
+          (res) => {
+            this.menu = res.data.menu;
+            this.generated = true;
 
-          this.$bus.$emit("message", {
-            type: "error",
-            text: `Impossibile generare la lista di piatti: ${err}`,
-          });
-        }
-      );
+            this.$store.commit("setCreator", false);
+          },
+          (err) => {
+            if (process.env.NODE_ENV === "development") console.error(err);
+
+            this.$bus.$emit("message", {
+              type: "error",
+              text: `Impossibile generare la lista di piatti: ${err}`,
+            });
+          }
+        );
+
+        this.openConfirm = false;
+      };
+
+      this.openConfirm = true;
     },
   },
 };

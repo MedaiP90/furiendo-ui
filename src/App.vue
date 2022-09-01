@@ -7,7 +7,7 @@
 
       <div class="d-flex flex-column align-center">
         <h2 class="hero">フリエンド</h2>
-        <div class="body-2 hero">Amici di sushi</div>
+        <div class="caption hero">Amici di sushi {{ version }}</div>
       </div>
 
       <v-spacer />
@@ -56,6 +56,12 @@ export default {
     mType: undefined,
     mText: undefined,
   }),
+
+  computed: {
+    version() {
+      return process.env.VUE_APP_VERSION;
+    },
+  },
 
   beforeMount() {
     this.$bus.$on("home", this.toggleHomeBtn);
